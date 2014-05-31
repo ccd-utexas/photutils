@@ -11,3 +11,9 @@ photometry tools.
   :target: https://coveralls.io/r/astropy/photutils
 
 .. _AstroPy: http://www.astropy.org/
+
+## Note for ccd-utexas:
+
+When photutils is integrated with astropy, delete this repository and use photutils through anaconda.
+
+To update:
