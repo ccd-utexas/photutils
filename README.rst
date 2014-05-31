@@ -19,9 +19,13 @@ When photutils is integrated with astropy, delete this repository and use photut
 Do not modify the code in this repository.
 
 To update ccd-utexas/photutils from astropy/photutils:
+
 - Navigate to https://github.com/ccd-utexas/photutils
+
 - click "Compare"
+
 - click "Edit"
+
 - Set:
 
   base fork: ccd-utexas/photutils  base: master
