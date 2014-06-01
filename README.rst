@@ -16,7 +16,8 @@ Note for ccd-utexas:
 =========
 
 When photutils is integrated with astropy, delete this repository and use photutils through anaconda.
-Do not modify the code in this repository.
+
+Code in this repository is subject to being overwritten by subsequent releases of photutils.
 
 To update ccd-utexas/photutils from astropy/photutils:
 
