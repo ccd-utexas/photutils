@@ -17,6 +17,9 @@ Note for ccd-utexas:
 
 Purpose: This fork is used to control the photutils version in use for tsphot. When photutils is integrated with astropy, delete this repository and use astropy.photometry through the Anaconda distribution.
 
+To install photutils to work with tsphot, first install and update anaconda.
+Then clone this repository ; cd /path/to/photutils ; python setup.py install
+
 Code in this repository is subject to being overwritten by subsequent releases of photutils.
 
 To update ccd-utexas/photutils from astropy/photutils:
