@@ -24,9 +24,15 @@ Code in this repository is subject to being overwritten by subsequent releases o
 
 To update ccd-utexas/photutils from astropy/photutils:
 - Navigate to https://github.com/ccd-utexas/photutils
+
 - click "Compare"
+
 - click "Edit"
+
 - Set:
+
   - base fork: ccd-utexas/photutils  base: master
+
   - head fork: astropy/photutils  compare: master
-  - This will merge astropy/photutils into ccd-utexas/photutils
+
+- This will merge astropy/photutils into ccd-utexas/photutils
