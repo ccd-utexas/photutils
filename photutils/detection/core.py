@@ -2,7 +2,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 import numpy as np
-from ..utils.scale_img import img_stats
+from ..utils import img_stats
 
 __all__ = ['detect_sources', 'find_peaks']
 
@@ -21,14 +21,17 @@ def detect_sources(image, snr_threshold, npixels, filter_fwhm=None,
         The 2D array of the image.
 
     snr_threshold : float
-        The signal-to-noise ratio threshold above which to detect
-        sources.  The background rms noise level is computed using
-        sigma-clipped statistics, which can be controlled via the
+        The signal-to-noise ratio per pixel above which to consider a
+        pixel as possibly being part of a source.  Detected sources must
+        have ``npixels`` connected pixels that are greater than
+        ``snr_threshold``.  The background rms noise level is computed
+        using sigma-clipped statistics, which can be controlled via the
         ``sig`` and ``iters`` keywords.
 
     npixels : int
-        The number of connected pixels an object must have above the
-        threshold level to be detected.  Must be a positive integer.
+        The number of connected pixels, each greater than the
+        ``snr_threshold`` level, that an object must have to be
+        detected.  Must be a positive integer.
 
     filter_fwhm : float, optional
         The FWHM of the circular 2D Gaussian filter that is applied to
@@ -61,13 +64,12 @@ def detect_sources(image, snr_threshold, npixels, filter_fwhm=None,
     Returns
     -------
     segment_image :  array_like
-        A 2D segmentation image of integers indicating segment labels.
+        A 2D segmentation image of positive integers indicating labels
+        for detected sources.  A value of zero is reserved for the
+        background.
     """
 
-    try:
-        from scipy import ndimage
-    except ImportError:
-        raise ImportError('detect_sources requires scipy.')
+    from scipy import ndimage
     bkgrd, median, bkgrd_rms = img_stats(image, image_mask=image_mask,
                                          mask_val=mask_val, sig=sig,
                                          iters=iters)
@@ -142,7 +144,7 @@ def find_peaks(image, snr_threshold, min_distance=5, exclude_border=True,
 
     num_peaks : int
         Maximum number of peaks. When the number of peaks exceeds
-        `num_peaks`, return `num_peaks` peaks based on highest peak
+        ``num_peaks``, return ``num_peaks`` peaks based on highest peak
         intensity.
 
     footprint : ndarray of bools, optional
@@ -195,11 +197,7 @@ def find_peaks(image, snr_threshold, min_distance=5, exclude_border=True,
     function returns the coordinates of peaks where dilated image =
     original.
     """
-
-    try:
-        from skimage.feature import peak_local_max
-    except ImportError:
-        raise ImportError('find_peaks requires scikit-image.')
+    from skimage.feature import peak_local_max
 
     bkgrd, median, bkgrd_rms = img_stats(image, image_mask=image_mask,
                                          mask_val=mask_val, sig=sig,

@@ -1,5 +1,5 @@
 # Compiled files
-*.py[co]
+*.py[cod]
 *.a
 *.o
 *.so
@@ -12,12 +12,12 @@ __pycache__
 # Other generated files
 */version.py
 benchmarks/_results
+*/cython_version.py
 htmlcov
 .coverage
 
 # Sphinx
 _build
-_generated
 docs/api
 
 # Packages/installer info
@@ -33,20 +33,15 @@ sdist
 develop-eggs
 .installed.cfg
 distribute-*.tar.gz
-.cache
 
 # Other
 .cache
+.tox
 .*.swp
 *~
 .project
 .pydevproject
 .settings
-photutils/cython_version.py
-photutils.cfg
-
-.project
-.pydevproject
 
 # Mac OSX
 .DS_Store
