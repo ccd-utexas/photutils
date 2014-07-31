@@ -3,14 +3,15 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 from astropy.tests.helper import pytest
 import numpy as np
-from numpy.testing import assert_allclose, assert_array_equal
-import itertools
+from numpy.testing import assert_array_equal
 from ..core import detect_sources, find_peaks
+
 try:
     import scipy
     HAS_SCIPY = True
 except ImportError:
     HAS_SCIPY = False
+
 try:
     import skimage
     HAS_SKIMAGE = True
@@ -38,6 +39,7 @@ class TestDetectSources(object):
     def test_small_sources(self):
         """Test detection where sources are smaller than npixels size."""
         segm = detect_sources(DATA, 0.1, 5)
+        assert_array_equal(segm, REF1)
 
     def test_zerothresh(self):
         """Test detection with zero snr_threshold."""
@@ -62,12 +64,12 @@ class TestDetectSources(object):
     def test_npix1_error(self):
         """Test if AssertionError raises if npixel is non-integer."""
         with pytest.raises(AssertionError):
-            segm = detect_sources(DATA, 1, 0.1)
+            detect_sources(DATA, 1, 0.1)
 
     def test_npix2_error(self):
         """Test if AssertionError raises if npixel is negative."""
         with pytest.raises(AssertionError):
-            segm = detect_sources(DATA, 1, -1)
+            detect_sources(DATA, 1, -1)
 
     def test_mask_val(self):
         """Test detection with mask_val."""
@@ -94,6 +96,7 @@ class TestDetectSources(object):
 
 
 @pytest.mark.skipif('not HAS_SCIPY')
+@pytest.mark.skipif('not HAS_SKIMAGE')
 class TestFindPeaks(object):
     def test_find_peaks(self):
         """Test basic peak detection."""

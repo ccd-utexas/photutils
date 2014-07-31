@@ -11,68 +11,133 @@ The `photutils` package is destined to implement functions for
   (e.g., centroid and shape parameters)
 * performing photometry (both aperture and PSF)
 
-.. note::
+Dependencies
+------------
 
-    It is possible that `photutils` will eventually be merged into ``astropy`` as
-    ``astropy.photometry``.
+`photutils` requires the following packages to be available:
 
-.. note::
+* `numpy <http://www.numpy.org/>`__
+* `astropy <http://www.astropy.org/>`__
+* `imageutils <https://imageutils.readthedocs.org/en/latest/imageutils/index.html>`__
+  (planned to be included in the Astropy core as ``astropy.image`` before the 1.0 release)
 
-    `photutils` requires `numpy <http://www.numpy.org/>`__ and
-    `astropy <http://www.astropy.org/>`__ to be installed.
-    Some functionality is only available if `scipy <http://www.scipy.org/>`__ or
-    `scikit-image <http://scikit-image.org/>`__ are installed, users are
-    encouraged to install those optional dependencies.
+Some functionality is only available if the following optional dependencies are installed:
+
+* `scipy <http://www.scipy.org/>`__
+* `scikit-image <http://scikit-image.org/>`__
+* `matplotlib <http://matplotlib.org/>`__
 
 Getting Started
 ---------------
 
-.. note::
-   Eventually this will contain an example showing object detection
-   and photometry used in series. For now it just shows an aperture
-   photometry function.
+Given a data array, the following example uses `photutils` to find sources
+and perform aperture photometry on them.
 
-Given a list of source locations, sum flux in identical circular apertures:
+The dataset in this example is `~photutils.datasets.load_star_image`:
 
   >>> import numpy as np
-  >>> import photutils
-  >>> data = np.ones((100, 100))
-  >>> xc = [10., 20., 30., 40.]
-  >>> yc = [10., 20., 30., 40.]
-  >>> apertures = [photutils.CircularAperture(3.)] * len(xc)
-  >>> flux = photutils.aperture_photometry(data, xc, yc, apertures)
-  >>> flux
-  array([ 28.27433388,  28.27433388,  28.27433388,  28.27433388])
+  >>> from photutils import datasets
+  >>> hdu = datasets.load_star_image()   # doctest: +REMOTE_DATA
+  >>> image = hdu.data[500:700, 500:700]   # doctest: +REMOTE_DATA
+  >>> image -= np.median(image)   # doctest: +REMOTE_DATA
+
+In this example we assume that the data is background-subtracted.
+`photutils` supports different source detection algorithms, this example
+uses `~photutils.daofind`. The parameters of the detected sources are returned
+in a `~astropy.table.Table`:
+
+  >>> from astropy.stats import median_absolute_deviation as mad
+  >>> from photutils import daofind
+  >>> bkg_sigma = 1.48 * mad(image)   # doctest: +REMOTE_DATA
+  >>> sources = daofind(image, fwhm=4.0, threshold=3*bkg_sigma)   # doctest: +REMOTE_DATA
+
+Given the list of source locations, summing the pixel values in identical
+circular apertures. The result is returned in a `~astropy.table.Table`, with
+a column named ``'aperture_sum'``:
+
+  >>> from photutils import CircularAperture, CircularAnnulus, aperture_photometry
+  >>> positions = zip(sources['xcen'], sources['ycen'])   # doctest: +REMOTE_DATA
+  >>> apertures = CircularAperture(positions, 4.)   # doctest: +REMOTE_DATA
+  >>> fluxtable = aperture_photometry(image, apertures)   # doctest: +REMOTE_DATA
+
+And now check which one is the fainest and brightest source in this dataset:
+
+  >>> faintest = (apertures.positions[fluxtable['aperture_sum'].argmin()],
+  ...             fluxtable['aperture_sum'].min())   # doctest: +REMOTE_DATA
+  >>> print(faintest)   # doctest: +REMOTE_DATA
+  (array([ 118.71993103,   66.80723769]), -342.91175178365006)
+  >>> brightest = (apertures.positions[fluxtable['aperture_sum'].argmax()],
+  ...             fluxtable['aperture_sum'].max())   # doctest: +REMOTE_DATA
+  >>> print(brightest)   # doctest: +REMOTE_DATA
+  (array([ 57.85429092,  99.22152913]), 387408.0358707984)
+
+
+Let's plot the image and the apertures. The apertures of all the
+sources found in this image are marked with gray circles. The brightest source is
+marked with red while the faintest is with blue:
+
+.. doctest-skip::
+
+  >>> import matplotlib.patches as patches
+  >>> import matplotlib.pylab as plt
+  >>> plt.imshow(image, cmap='gray_r', origin='lower')
+  >>> apertures.plot(color='gray', lw=1.5)
+  >>> plt.gca().add_patch(patches.Circle(faintest[0], apertures.r, color='blue',
+  ...                                    fill=False, lw=1.5))
+  >>> plt.gca().add_patch(patches.Circle(brightest[0], apertures.r, color='red',
+  ...                                    fill=False, lw=1.5))
+
+
+.. plot::
+
+  import numpy as np
+  import matplotlib.pylab as plt
+  import matplotlib.patches as patches
+  from astropy.stats import median_absolute_deviation as mad
+  from photutils import datasets, daofind, CircularAperture, aperture_photometry
+  hdu = datasets.load_star_image()
+  image = hdu.data[500:700, 500:700]
+  image -= np.median(image)
+  bkg_sigma = 1.48 * mad(image)
+  sources = daofind(image, fwhm=4.0, threshold=3*bkg_sigma)
+  positions = zip(sources['xcen'], sources['ycen'])
+  apertures = CircularAperture(positions, 4.)
+  fluxtable = aperture_photometry(image, apertures)
+  faintest = (apertures.positions[fluxtable['aperture_sum'].argmin()], fluxtable['aperture_sum'].min())
+  brightest = (apertures.positions[fluxtable['aperture_sum'].argmax()], fluxtable['aperture_sum'].max())
+  plt.imshow(image, cmap='gray_r', origin='lower')
+  apertures.plot(color='gray', lw=1.5)
+  plt.gca().add_patch(patches.Circle(faintest[0], apertures.r, color='blue',
+                                     fill=False, lw=1.5))
+  plt.gca().add_patch(patches.Circle(brightest[0], apertures.r, color='red',
+                                     fill=False, lw=1.5))
 
 
 Using `photutils`
 -----------------
 
 .. toctree::
+    :maxdepth: 2
 
     aperture.rst
     psf.rst
+    datasets.rst
+    detection.rst
+    morphology.rst
+    geometry.rst
+    utils.rst
+
+.. toctree::
+  :maxdepth: 1
+
+  high-level_API.rst
 
 
-Source Detection and Segmentation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. toctree:: detection.rst
-    :maxdepth: 1
-
-
-Source Morphology
-^^^^^^^^^^^^^^^^^
-
-.. toctree:: morphology.rst
-    :maxdepth: 1
-
-
-Utils
-^^^^^
-
-.. toctree:: utils.rst
-    :maxdepth: 1
+.. note::
+   We also have a series of IPython notebooks that demonstrate how to use photutils.
+   You can view them online `here <http://nbviewer.ipython.org/github/astropy/photutils-datasets/tree/master/notebooks/>`__
+   or download them `here <https://github.com/astropy/photutils-datasets>`__ if you'd like to execute them on your machine.
+   Contributions welcome!
 
 
 .. _coordinate-conventions:
@@ -94,6 +159,5 @@ zero-indexing, this means that the array is defined over the
 coordinate range ``-0.5 < x <= data.shape[1] - 0.5``,
 ``-0.5 < y <= data.shape[0] - 0.5``.
 
-.. automodapi:: photutils
 
 .. _SourceExtractor: http://www.astromatic.net/software/sextractor

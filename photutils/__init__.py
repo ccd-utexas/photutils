@@ -10,11 +10,9 @@ Astropy affiliated package for image photometry utilities.
 from ._astropy_init import *
 # ----------------------------------------------------------------------------
 
-from .aperture import *
-from .psf import *
-from .detection.core import *
-from .detection.findstars import *
+if not _ASTROPY_SETUP_:
 
-# TODO: discuss if this should be imported into the top-level namespace:
-from .detection.morphology import *
-from .utils.scale_img import *
+    from .aperture import *
+    from .psf import *
+    from .detection.core import *
+    from .detection.findstars import *

@@ -29,8 +29,17 @@ import datetime
 import os
 import sys
 
+try:
+    import astropy_helpers
+except ImportError:
+    # Building from inside the docs/ directory?
+    if os.path.basename(os.getcwd()) == 'docs':
+        a_h_path = os.path.abspath(os.path.join('..', 'astropy_helpers'))
+        if os.path.isdir(a_h_path):
+            sys.path.insert(1, a_h_path)
+
 # Load all of the global Astropy configuration
-from astropy.sphinx.conf import *
+from astropy_helpers.sphinx.conf import *
 
 # Get configuration information from setup.cfg
 from distutils import config
@@ -42,6 +51,19 @@ setup_cfg = dict(conf.items('metadata'))
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #needs_sphinx = '1.1'
+
+# We don't have references to `h5py` ... no need to load the intersphinx mapping file.
+del intersphinx_mapping['h5py']
+
+# We currently want to link to the latest development version of the astropy docs,
+# so we override the `intersphinx_mapping` entry pointing to the stable docs version
+# that is listed in `astropy/sphinx/conf.py`.
+intersphinx_mapping['astropy'] = ('http://docs.astropy.org/en/latest/', None)
+
+# Extend astropy intersphinx_mapping with packages we use here
+intersphinx_mapping['skimage'] = ('http://scikit-image.org/docs/stable/', None)
+intersphinx_mapping['imageutils'] = ('http://imageutils.readthedocs.org/en/latest/', None)
+
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -140,3 +162,5 @@ if eval(setup_cfg.get('edit_on_github')):
 
     edit_on_github_source_root = ""
     edit_on_github_doc_root = "docs"
+
+autodoc_docstring_signature = True

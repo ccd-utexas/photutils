@@ -246,7 +246,7 @@ def daofind(data, fwhm, threshold, sigma_radius=1.5, ratio=1.0, theta=0.0,
 
     Returns
     -------
-    table : `astropy.table.Table`
+    table : `~astropy.table.Table`
 
         A table of found objects with the following parameters:
 
@@ -295,7 +295,8 @@ def daofind(data, fwhm, threshold, sigma_radius=1.5, ratio=1.0, theta=0.0,
     idcol = Column(name='id', data=np.arange(len(tbl)) + 1)
     tbl.add_column(idcol, 0)
     if len(tbl) == 0:
-        warnings.warn('Sources were found, but none pass the sharpness and roundness criteria.', UserWarning)
+        warnings.warn('Sources were found, but none pass the sharpness and '
+                      'roundness criteria.', UserWarning)
     return tbl
 
 
@@ -349,7 +350,7 @@ def irafstarfind(data, fwhm, threshold, sigma_radius=1.5, sky=None,
 
     Returns
     -------
-    table : `astropy.table.Table`
+    table : `~astropy.table.Table`
 
         A table of found objects with the following parameters:
 
@@ -416,7 +417,8 @@ def irafstarfind(data, fwhm, threshold, sigma_radius=1.5, sky=None,
     idcol = Column(name='id', data=np.arange(len(tbl)) + 1)
     tbl.add_column(idcol, 0)
     if len(tbl) == 0:
-        warnings.warn('Sources were found, but none pass the sharpness and roundness criteria.', UserWarning)
+        warnings.warn('Sources were found, but none pass the sharpness and '
+                      'roundness criteria.', UserWarning)
     return tbl
 
 
@@ -443,19 +445,15 @@ def _findobjs(data, kernel, threshold):
         A list of ``findstars._ImgCutout`` objects containing the image
         cutout for each source.
     """
+    from scipy import ndimage
 
-    try:
-        from scipy import ndimage
-    except ImportError:
-        raise ImportError('daofind and irafstarfind require scipy.')
     # TODO: astropy's convolve fails with zero-sum kernels (use scipy for now)
     # https://github.com/astropy/astropy/issues/1647
     # convimg = astropy.nddata.convolve(data, kernel, boundary='fill',
     #                                   fill_value=0.0)
     xkrad = kernel.shape[1] // 2
     ykrad = kernel.shape[0] // 2
-    convdata = ndimage.convolve(data, kernel, mode='constant',
-                                      cval=0.0)
+    convdata = ndimage.convolve(data, kernel, mode='constant', cval=0.0)
     shape = ndimage.generate_binary_structure(2, 2)
     objlabels, nobj = ndimage.label(convdata > threshold, structure=shape)
     objs = []
@@ -557,11 +555,8 @@ def _irafstarfind_moments(imgcutout, kernel, sky):
     table : `astropy.table.Table`
         A table of the object parameters.
     """
+    from skimage.measure import moments, moments_central
 
-    try:
-        from skimage.measure import moments, moments_central
-    except ImportError:
-        raise ImportError('irafstarfind requires scikit-image.')
     result = defaultdict(list)
     img = np.array(imgcutout.data * kernel.mask) - sky
     img = np.where(img > 0, img, 0)    # starfind discards negative pixels
