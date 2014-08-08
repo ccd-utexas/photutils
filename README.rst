@@ -19,8 +19,8 @@ Note for ccd-utexas:
 When photutils is integrated with astropy, or when a stable version is released, delete this repository
 and use astropy.photometry through the Anaconda Python distribution.
 
-**To install:** Install and update anaconda. Then clone this repository ; ```$ cd /path/to/photutils```;
-```$ python setup.py install```
+**To install:** Install and update anaconda. Then clone this repository ; ``$ cd /path/to/photutils``;
+``$ python setup.py install``
 
 Code in this repository is subject to being overwritten by subsequent releases of photutils.
 
