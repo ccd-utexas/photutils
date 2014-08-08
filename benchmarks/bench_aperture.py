@@ -133,10 +133,10 @@ c[name]['multiap']  = False
 c[name]['multipos'] = True
 
 f = {}
-f['circ'] = photutils.CircularAperture
-f['circ_ann'] = photutils.CircularAnnulus
-f['elli'] = photutils.EllipticalAperture
-f['elli_ann'] = photutils.EllipticalAnnulus
+f['circ'] = 'circular'
+f['circ_ann'] = 'circular_annulus'
+f['elli'] = 'elliptical'
+f['elli_ann'] = 'elliptical_annulus'
 
 
 # Select subset of defined tests and functions to run, to save time.
@@ -154,6 +154,14 @@ if not args.show:
 
     # Initialize results
     results = OrderedDict()
+
+    # print version information
+    print("=" * 79)
+    from astropy import __version__
+    print("astropy version:", __version__)
+    print("photutils version:", photutils.__version__)
+    print("numpy version:", np.__version__)
+    print("=" * 79)
 
     for name in names_to_run:
 
@@ -188,21 +196,28 @@ if not args.show:
                     # Check whether it is single or multiple apertures
                     if not c[name]['multiap']:
                         if subpixels == 'exact':
-                            photutils.aperture_photometry(data, f[t](c[name]['pos'], *c[name][t]),
+                            photutils.aperture_photometry(data, c[name]['pos'],
+                                                          ((f[t],) + c[name][t]),
                                                           method='exact')
                         else:
-                            photutils.aperture_photometry(data, f[t](c[name]['pos'], *c[name][t]),
-                                                          method='subpixel', subpixels=subpixels)
+                            photutils.aperture_photometry(data, c[name]['pos'],
+                                                          ((f[t],) + c[name][t]),
+                                                          method='subpixel',
+                                                          subpixels=subpixels)
 
                     else:
                         if subpixels == 'exact':
                             for index in range(len(c[name][t][0])):
-                                photutils.aperture_photometry(data, f[t](c[name]['pos'], *c[name][t][0][index]),
+                                photutils.aperture_photometry(data, c[name]['pos'],
+                                                              (f[t], c[name][t][0][index]),
                                                               method='exact')
                         else:
                             for index in range(len(c[name][t][0])):
-                                photutils.aperture_photometry(data, f[t](c[name]['pos'], *c[name][t][0][index]),
-                                                              method='subpixel', subpixels=subpixels)
+                                photutils.aperture_photometry(data, c[name]['pos'],
+                                                              (f[t], c[name][t][0][index]),
+                                                              method='subpixel',
+                                                              subpixels=subpixels)
+
                 time2 = time.time()
                 time_sec = (time2 - time1) / c[name]['iter']
                 print("{0:10.5f} ".format(time_sec * 1000.))
