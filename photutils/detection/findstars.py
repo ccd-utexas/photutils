@@ -203,7 +203,7 @@ def daofind(data, fwhm, threshold, sigma_radius=1.5, ratio=1.0, theta=0.0,
 
     Parameters
     ----------
-    data : array_like
+    data : array_like or `~astropy.nddata.NDData`
         The 2D array of the image.
 
     fwhm : float
@@ -215,7 +215,7 @@ def daofind(data, fwhm, threshold, sigma_radius=1.5, ratio=1.0, theta=0.0,
 
     sigma_radius : float, optional
         The truncation radius of the Gaussian kernel in units of sigma
-        (standard deviation) [``1 sigma = FWHM / 2.0*sqrt(2.0*log(2.0))``].
+        (standard deviation) [``1 sigma = FWHM / (2.0*sqrt(2.0*log(2.0)))``].
 
     ratio : float, optional
         The ratio of the minor to major axis of the Gaussian kernel.
@@ -315,7 +315,7 @@ def irafstarfind(data, fwhm, threshold, sigma_radius=1.5, sky=None,
 
     Parameters
     ----------
-    data : array_like
+    data : array_like or `~astropy.nddata.NDData`
         The 2D array of the image.
 
     fwhm : float

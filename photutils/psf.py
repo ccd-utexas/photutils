@@ -7,22 +7,10 @@ import warnings
 import numpy as np
 from astropy.modeling.parameters import Parameter
 from astropy.utils.exceptions import AstropyUserWarning
-
-# TODO: remove try ... except when Astropy 0.3 support is dropped
-try:
-    from astropy.modeling.fitting import LevMarLSQFitter
-except ImportError:
-    from astropy.modeling.fitting import NonLinearLSQFitter as LevMarLSQFitter
-
-# TODO: remove try ... except when Astropy 0.3 support is dropped
-try:
-    from astropy.modeling import Fittable2DModel
-except ImportError:
-    from astropy.modeling import Parametric2DModel as Fittable2DModel
-
-
-from imageutils import (extract_array_2d, subpixel_indices, add_array_2d,
-                        mask_to_mirrored_num)
+from astropy.modeling.fitting import LevMarLSQFitter
+from astropy.modeling import Fittable2DModel
+from .extern.imageutils import (extract_array_2d, subpixel_indices, add_array_2d,
+                                mask_to_mirrored_num)
 
 
 __all__ = ['DiscretePRF', 'create_prf', 'psf_photometry',
@@ -204,8 +192,8 @@ class GaussianPSF(Fittable2DModel):
     ----------
     sigma : float
         Width of the Gaussian PSF.
-    amplitude : float (default 1)
-        Amplitude at the peak value.
+    flux : float (default 1)
+        Total flux integrated over the entire PSF.
     x_0 : float (default 0)
         Position of the peak in x direction.
     y_0 : float (default 0)
@@ -218,7 +206,7 @@ class GaussianPSF(Fittable2DModel):
         .. math::
 
             f(x, y) =
-                \\frac{A}{4}
+                \\frac{F}{4}
                 \\left[
                 \\textnormal{erf} \\left(\\frac{x - x_0 + 0.5}
                 {\\sqrt{2} \\sigma} \\right) -
@@ -232,16 +220,16 @@ class GaussianPSF(Fittable2DModel):
                 {\\sqrt{2} \\sigma} \\right)
                 \\right]
 
-    Where ``erf`` denotes the error function.
+    Where ``erf`` denotes the error function and ``F`` to total integrated flux..
     """
-    amplitude = Parameter('amplitude')
+    flux = Parameter('flux')
     x_0 = Parameter('x_0')
     y_0 = Parameter('y_0')
     sigma = Parameter('sigma')
 
     _erf = None
 
-    def __init__(self, sigma, amplitude=1, x_0=0, y_0=0):
+    def __init__(self, sigma, flux=1, x_0=0, y_0=0):
         if self._erf is None:
             from scipy.special import erf
             self.__class__._erf = erf
@@ -249,7 +237,7 @@ class GaussianPSF(Fittable2DModel):
         constraints = {'fixed': {'x_0': True, 'y_0': True, 'sigma': True}}
         super(GaussianPSF, self).__init__(n_models=1, sigma=sigma,
                                           x_0=x_0, y_0=y_0,
-                                          amplitude=amplitude, **constraints)
+                                          flux=flux, **constraints)
 
         # Default size is 8 * sigma
         self.shape = (int(8 * sigma) + 1, int(8 * sigma) + 1)
@@ -259,14 +247,14 @@ class GaussianPSF(Fittable2DModel):
         self.x_0.fixed = True
         self.y_0.fixed = True
 
-    def eval(self, x, y, amplitude, x_0, y_0, sigma):
+    def eval(self, x, y, flux, x_0, y_0, sigma):
         """
         Model function Gaussian PSF model.
         """
-        return amplitude / 4 * ((self._erf((x - x_0 + 0.5) / (np.sqrt(2) * sigma))
+        return flux / 4 * ((self._erf((x - x_0 + 0.5) / (np.sqrt(2) * sigma))
                             - self._erf((x - x_0 - 0.5) / (np.sqrt(2) * sigma)))
-                            * (self._erf((y - y_0 + 0.5) / (np.sqrt(2) * sigma))
-                            - self._erf((y - y_0 - 0.5) / (np.sqrt(2) * sigma))))
+                          * (self._erf((y - y_0 + 0.5) / (np.sqrt(2) * sigma))
+                             - self._erf((y - y_0 - 0.5) / (np.sqrt(2) * sigma))))
 
     def fit(self, data, indices):
         """
@@ -309,7 +297,7 @@ class GaussianPSF(Fittable2DModel):
             y = extract_array_2d(indices[0], self.shape, position)
             x = extract_array_2d(indices[1], self.shape, position)
             m = self.fitter(self, x, y, sub_array_data)
-            return m.amplitude.value
+            return m.flux.value
         else:
             return 0
 
@@ -342,7 +330,10 @@ def psf_photometry(data, positions, psf, mask=None, mode='sequential',
             * 'simultaneous'
                 Fit PSF/PRF simultaneous to all given positions.
             * 'sequential' (default)
-                Fit PSF/PRF one after another to the given positions .
+                Fit PSF/PRF one after another to the given positions.
+    tune_coordinates : boolean
+        If ``True`` the peak position of the PSF will be fit, if ``False``,
+        it is frozen to the input value.
 
     Examples
     --------
@@ -360,6 +351,9 @@ def psf_photometry(data, positions, psf, mask=None, mode='sequential',
     if tune_coordinates:
         psf.fixed['x_0'] = False
         psf.fixed['y_0'] = False
+    else:
+        psf.fixed['x_0'] = True
+        psf.fixed['y_0'] = True
 
     # Actual photometry
     result = np.array([])
